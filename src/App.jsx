@@ -3,6 +3,7 @@ import useSWR from 'swr'
 import Filters from './components/Filters'
 import StatsCard from './components/StatsCard'
 import TaskRow from './components/TaskRow'
+import StudentRegistry from './components/StudentRegistry'
 import { usePinnedTasks } from './hooks/usePinnedTasks'
 import './App.css'
 
@@ -16,6 +17,7 @@ const fetcher = async (url) => {
 }
 
 function App() {
+  const [page, setPage] = useState('dashboard')
   const [query, setQuery] = useState('')
   const [showCompleted, setShowCompleted] = useState(true)
   const [savingIds, setSavingIds] = useState([])
@@ -99,7 +101,36 @@ function App() {
   }
 
   return (
-    <main className="dashboard">
+    <>
+      {/* ── Site-wide Navigation ── */}
+      <nav className="sr-navbar navbar navbar-expand">
+        <span className="sr-navbar-brand navbar-brand me-4">📚 Learning Hub</span>
+        <ul className="navbar-nav gap-2">
+          <li className="nav-item">
+            <button
+              className={`sr-nav-btn${page === 'dashboard' ? ' active' : ''}`}
+              onClick={() => setPage('dashboard')}
+            >
+              Dashboard
+            </button>
+          </li>
+          <li className="nav-item">
+            <button
+              className={`sr-nav-btn${page === 'registry' ? ' active' : ''}`}
+              onClick={() => setPage('registry')}
+            >
+              Student Registry
+            </button>
+          </li>
+        </ul>
+      </nav>
+
+      {/* ── Student Registry Page ── */}
+      {page === 'registry' && <StudentRegistry />}
+
+      {/* ── Dashboard Page ── */}
+      {page === 'dashboard' && (
+      <main className="dashboard">
       <header className="dashboard-header">
         <div>
           <h1>Learning Dashboard</h1>
@@ -143,6 +174,8 @@ function App() {
         </ul>
       )}
     </main>
+      )}
+    </>
   )
 }
 
