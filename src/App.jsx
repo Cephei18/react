@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import Snowfall from 'react-snowfall'
 import useSWR from 'swr'
 import Filters from './components/Filters'
 import StatsCard from './components/StatsCard'
@@ -34,7 +35,7 @@ function App() {
     revalidateOnFocus: true,
   })
 
-  const todos = data?.todos ?? []
+  const todos = useMemo(() => data?.todos ?? [], [data])
 
   const filteredTodos = useMemo(() => {
     return todos
@@ -101,81 +102,100 @@ function App() {
   }
 
   return (
-    <>
-      {/* ── Site-wide Navigation ── */}
-      <nav className="sr-navbar navbar navbar-expand">
-        <span className="sr-navbar-brand navbar-brand me-4">📚 Learning Hub</span>
-        <ul className="navbar-nav gap-2">
-          <li className="nav-item">
-            <button
-              className={`sr-nav-btn${page === 'dashboard' ? ' active' : ''}`}
-              onClick={() => setPage('dashboard')}
-            >
-              Dashboard
-            </button>
-          </li>
-          <li className="nav-item">
-            <button
-              className={`sr-nav-btn${page === 'registry' ? ' active' : ''}`}
-              onClick={() => setPage('registry')}
-            >
-              Student Registry
-            </button>
-          </li>
-        </ul>
-      </nav>
+    <div className="app-shell">
+      <div className="app-snowfall app-snowfall-back" aria-hidden="true">
+        <Snowfall
+          color="#d8d4fe"
+          snowflakeCount={220}
+          speed={[0.5, 1.5]}
+          wind={[-0.35, 0.3]}
+          radius={[0.8, 4.4]}
+        />
+      </div>
 
-      {/* ── Student Registry Page ── */}
-      {page === 'registry' && <StudentRegistry />}
+      <div className="app-snowfall app-snowfall-front" aria-hidden="true">
+        <Snowfall
+          color="#ffffff"
+          snowflakeCount={90}
+          speed={[1.2, 2.6]}
+          wind={[-0.2, 0.45]}
+          radius={[1.8, 7]}
+        />
+      </div>
 
-      {/* ── Dashboard Page ── */}
-      {page === 'dashboard' && (
-      <main className="dashboard">
-      <header className="dashboard-header">
-        <div>
-          <h1>Learning Dashboard</h1>
-          <p>Practice React hooks, state updates, and SWR revalidation.</p>
-        </div>
-        <button className="refresh-btn" onClick={() => mutate()}>
-          {isValidating ? 'Refreshing...' : 'Refresh'}
-        </button>
-      </header>
+      <div className="app-content">
+        <nav className="sr-navbar navbar navbar-expand">
+          <span className="sr-navbar-brand navbar-brand me-4">📚 Learning Hub</span>
+          <ul className="navbar-nav gap-2">
+            <li className="nav-item">
+              <button
+                className={`sr-nav-btn${page === 'dashboard' ? ' active' : ''}`}
+                onClick={() => setPage('dashboard')}
+              >
+                Dashboard
+              </button>
+            </li>
+            <li className="nav-item">
+              <button
+                className={`sr-nav-btn${page === 'registry' ? ' active' : ''}`}
+                onClick={() => setPage('registry')}
+              >
+                Student Registry
+              </button>
+            </li>
+          </ul>
+        </nav>
 
-      <Filters
-        query={query}
-        onQueryChange={setQuery}
-        showCompleted={showCompleted}
-        onShowCompletedChange={setShowCompleted}
-      />
+        {page === 'registry' && <StudentRegistry />}
 
-      <section className="stats">
-        <StatsCard title="Total" value={todos.length} />
-        <StatsCard title="Completed" value={completedCount} />
-        <StatsCard title="Filtered" value={filteredTodos.length} />
-        <StatsCard title="Pin Clicks" value={pinClicks} />
-        <StatsCard title="Pinned" value={pinnedCount} />
-      </section>
+        {page === 'dashboard' && (
+          <main className="dashboard">
+            <header className="dashboard-header">
+              <div>
+                <h1>Learning Dashboard</h1>
+                <p>Practice React hooks, state updates, and SWR revalidation.</p>
+              </div>
+              <button className="refresh-btn" onClick={() => mutate()}>
+                {isValidating ? 'Refreshing...' : 'Refresh'}
+              </button>
+            </header>
 
-      {isLoading && <p className="status">Loading tasks...</p>}
-      {error && <p className="status error">{error.message}</p>}
-
-      {!isLoading && !error && (
-        <ul className="task-list">
-          {filteredTodos.map((todo) => (
-            <TaskRow
-              key={todo.id}
-              todo={todo}
-              pinned={isPinned(todo.id)}
-              isSaving={savingIds.includes(todo.id)}
-              onTogglePinned={togglePinned}
-              onToggleCompleted={toggleCompleted}
+            <Filters
+              query={query}
+              onQueryChange={setQuery}
+              showCompleted={showCompleted}
+              onShowCompletedChange={setShowCompleted}
             />
-          ))}
-        </ul>
-      )}
-    </main>
-      )}
-    </>
+
+            <section className="stats">
+              <StatsCard title="Total" value={todos.length} />
+              <StatsCard title="Completed" value={completedCount} />
+              <StatsCard title="Filtered" value={filteredTodos.length} />
+              <StatsCard title="Pin Clicks" value={pinClicks} />
+              <StatsCard title="Pinned" value={pinnedCount} />
+            </section>
+
+            {isLoading && <p className="status">Loading tasks...</p>}
+            {error && <p className="status error">{error.message}</p>}
+
+            {!isLoading && !error && (
+              <ul className="task-list">
+                {filteredTodos.map((todo) => (
+                  <TaskRow
+                    key={todo.id}
+                    todo={todo}
+                    pinned={isPinned(todo.id)}
+                    isSaving={savingIds.includes(todo.id)}
+                    onTogglePinned={togglePinned}
+                    onToggleCompleted={toggleCompleted}
+                  />
+                ))}
+              </ul>
+            )}
+          </main>
+        )}
+      </div>
+    </div>
   )
 }
 

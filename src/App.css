@@ -3,6 +3,40 @@ body {
   background: #f8f5ff;
 }
 
+#root {
+  min-height: 100vh;
+}
+
+.app-shell {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+.app-content {
+  position: relative;
+  z-index: 2;
+}
+
+.app-snowfall {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.app-snowfall-back {
+  opacity: 0.95;
+  mix-blend-mode: multiply;
+  filter: saturate(1.15) brightness(1.02);
+}
+
+.app-snowfall-front {
+  opacity: 0.92;
+  mix-blend-mode: screen;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.75));
+}
+
 .dashboard {
   width: min(900px, 100%);
   margin: 0 auto;
