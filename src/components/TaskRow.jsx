@@ -1,4 +1,4 @@
-function TaskRow({ todo, pinned, isSaving, onTogglePinned, onToggleCompleted }) {
+function TaskRow({ todo, pinned, isSaving, onTogglePinned, onToggleCompleted, onDelete }) {
   return (
     <li className={pinned ? 'task-item highlighted' : 'task-item'}>
       <div>
@@ -17,6 +17,15 @@ function TaskRow({ todo, pinned, isSaving, onTogglePinned, onToggleCompleted }) 
           disabled={isSaving}
         >
           {isSaving ? 'Saving...' : todo.completed ? 'Mark Open' : 'Mark Done'}
+        </button>
+        <button
+          type="button"
+          className="secondary delete-btn"
+          onClick={() => onDelete(todo.id)}
+          disabled={isSaving}
+          aria-label="Delete task"
+        >
+          🗑️
         </button>
       </div>
     </li>

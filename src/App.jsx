@@ -20,6 +20,8 @@ const fetcher = async (url) => {
 function App() {
   const [page, setPage] = useState('dashboard')
   const [query, setQuery] = useState('')
+  const [newTodo, setNewTodo] = useState('')
+  const [viewMode, setViewMode] = useState('list')
   const [showCompleted, setShowCompleted] = useState(true)
   const [savingIds, setSavingIds] = useState([])
   const { pinClicks, pinnedCount, isPinned, togglePinned } = usePinnedTasks()
@@ -101,6 +103,87 @@ function App() {
     }
   }
 
+  const addTodo = async (e) => {
+    e.preventDefault()
+    if (!newTodo.trim()) return
+
+    const tempId = Date.now() // temporary ID
+    const newTodoItem = {
+      id: tempId,
+      todo: newTodo,
+      completed: false,
+      userId: 5, // required by dummyjson
+    }
+
+    setNewTodo('') // clear input immediately
+
+    try {
+      await mutate(
+        async (currentData) => {
+          const response = await fetch('https://dummyjson.com/todos/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              todo: newTodoItem.todo,
+              completed: false,
+              userId: 5,
+            }),
+          })
+
+          if (!response.ok) throw new Error('Failed to add todo')
+          const addedTodo = await response.json()
+
+          return {
+            ...currentData,
+            todos: [addedTodo, ...(currentData?.todos ?? [])],
+          }
+        },
+        {
+          optimisticData: (currentData) => ({
+            ...currentData,
+            todos: [newTodoItem, ...(currentData?.todos ?? [])],
+          }),
+          rollbackOnError: true,
+          revalidate: false,
+        }
+      )
+    } catch (err) {
+      console.error('Failed to add todo:', err)
+    }
+  }
+
+  const deleteTodo = async (id) => {
+    setSavingIds((current) => [...current, id])
+    try {
+      await mutate(
+        async (currentData) => {
+          const response = await fetch(`https://dummyjson.com/todos/${id}`, {
+            method: 'DELETE',
+          })
+
+          if (!response.ok) throw new Error('Failed to delete todo')
+          
+          return {
+            ...currentData,
+            todos: (currentData?.todos ?? []).filter((t) => t.id !== id),
+          }
+        },
+        {
+          optimisticData: (currentData) => ({
+            ...currentData,
+            todos: (currentData?.todos ?? []).filter((t) => t.id !== id),
+          }),
+          rollbackOnError: true,
+          revalidate: false,
+        }
+      )
+    } catch (err) {
+      console.error('Failed to delete todo:', err)
+    } finally {
+      setSavingIds((current) => current.filter((item) => item !== id))
+    }
+  }
+
   return (
     <div className="app-shell">
       <div className="app-snowfall app-snowfall-back" aria-hidden="true">
@@ -155,10 +238,31 @@ function App() {
                 <h1>Learning Dashboard</h1>
                 <p>Practice React hooks, state updates, and SWR revalidation.</p>
               </div>
-              <button className="refresh-btn" onClick={() => mutate()}>
-                {isValidating ? 'Refreshing...' : 'Refresh'}
-              </button>
+              <div style={{ display: 'flex', gap: '10px' }}>
+                <button
+                  className="refresh-btn"
+                  onClick={() => setViewMode(viewMode === 'list' ? 'grid' : 'list')}
+                >
+                  {viewMode === 'list' ? 'Grid View' : 'List View'}
+                </button>
+                <button className="refresh-btn" onClick={() => mutate()}>
+                  {isValidating ? 'Refreshing...' : 'Refresh'}
+                </button>
+              </div>
             </header>
+
+            <form onSubmit={addTodo} className="add-todo-form">
+              <input
+                type="text"
+                value={newTodo}
+                onChange={(e) => setNewTodo(e.target.value)}
+                placeholder="Add a new task..."
+                disabled={isValidating}
+              />
+              <button type="submit" disabled={!newTodo.trim() || isValidating}>
+                Add
+              </button>
+            </form>
 
             <Filters
               query={query}
@@ -179,7 +283,7 @@ function App() {
             {error && <p className="status error">{error.message}</p>}
 
             {!isLoading && !error && (
-              <ul className="task-list">
+              <ul className={`task-list ${viewMode}`}>
                 {filteredTodos.map((todo) => (
                   <TaskRow
                     key={todo.id}
@@ -188,6 +292,7 @@ function App() {
                     isSaving={savingIds.includes(todo.id)}
                     onTogglePinned={togglePinned}
                     onToggleCompleted={toggleCompleted}
+                    onDelete={deleteTodo}
                   />
                 ))}
               </ul>
